@@ -35,6 +35,7 @@ function AppV2() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [selectedSession, setSelectedSession] = useState<string | null>(null);
 
   // Listen for messages from content script
   useEffect(() => {
@@ -102,7 +103,7 @@ function AppV2() {
       console.error('Error fetching sessions:', error);
     }
   };
-  console.log('sessions', sessions)
+  // console.log('sessions', sessions)
 
   // Scroll to bottom of messages
   const scrollToBottom = () => {
@@ -122,11 +123,14 @@ function AppV2() {
   useEffect(() => {
     if (selectedProject) {
       fetchSessions(selectedProject);
+      setSelectedSession(null); // Clear selected session when project changes
     } else {
       setSessions([]);
+      setSelectedSession(null);
     }
   }, [selectedProject]);
 
+  // console.log(selectedProject, selectedSession)
   // Handle WebSocket connect
   useEffect(() => {
     if(cnt != 0) return;
@@ -168,7 +172,17 @@ function AppV2() {
       // socket.off('events');
       // socket.off('disconnect');
     };
-  }, []);
+  }, [selectedProject, selectedSession]);
+
+  useEffect(() => {
+    if(!selectedProject || !selectedSession) return
+    const p = projects.find(item => item.displayName === selectedProject)
+    socket.emit('query', {
+      type: 'init',
+      projectName: p?.name,
+      sessionId: selectedSession
+    })
+  },[selectedProject, selectedSession]);
 
   // sendMessage hook - the "button" you can customize
   const sendMessage = (content: string) => {
@@ -231,7 +245,8 @@ function AppV2() {
               {sessions.map((session, index) => (
                 <Tag
                   key={index}
-                  variant="secondary"
+                  variant={selectedSession === session.id ? "default" : "secondary"}
+                  onClick={() => setSelectedSession(selectedSession === session.id ? null : session.id)}
                 >
                   {session.id}
                 </Tag>
