@@ -23,7 +23,15 @@ const LOCALHOST_INIT_DELAY_MS = 500;
 
 
 const createExtensionApi = () => {
-  const options: Options = { enabled: isExtensionEnabled };
+  const options: Options = { 
+    enabled: isExtensionEnabled,
+    onElementSelect: (element) => {
+        console.log("Selected:", element);
+    },
+    onCopySuccess: (elements, content) => {
+        console.log("Copied to clipboard:", content);
+    },
+  };
 
   if (!isLocalhost) {
     options.getContent = (elements) => {
