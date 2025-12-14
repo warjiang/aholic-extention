@@ -37,7 +37,8 @@ function AppV2() {
       console.log('receive content script', message)
       if (message.type === "REACT_GRAB_ELEMENTS_COPIED") {
         setCopiedContent(message.content);
-        setCopiedElements(message.elements);
+        // Append new elements to existing ones (instead of overwriting)
+        setCopiedElements(prev => [...prev, ...message.elements]);
         // You can also send this to the WebSocket if needed
         /*
         socket.emit('query', {
@@ -141,6 +142,7 @@ function AppV2() {
     e.preventDefault();
     sendMessage(inputValue);
   };
+  console.log('copiedElements', copiedElements)
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
@@ -165,10 +167,32 @@ function AppV2() {
               Clear
             </Button>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-3 overflow-hidden">
-            <pre className="text-xs text-gray-700 whitespace-pre-wrap max-h-32 overflow-y-auto">
-              {copiedContent}
-            </pre>
+          <div className="flex flex-wrap gap-2">
+            {copiedElements.map((element, index) => {
+              console.log('element', element)
+              // Use serializable element data directly
+              const tagName = element.tagName?.toUpperCase() || 'ELEMENT';
+              const id = element.id;
+              const className = element.className?.toString().split(' ')[0] || '';
+
+              // Build tag content
+              let tagContent = tagName;
+              if (id) {
+                tagContent += `#${id}`;
+              }
+              if (className) {
+                tagContent += `.${className}`;
+              }
+
+              return (
+                <div
+                  key={index}
+                  className="px-3 py-1 bg-primary text-primary-foreground text-xs rounded-full"
+                >
+                  {tagContent}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

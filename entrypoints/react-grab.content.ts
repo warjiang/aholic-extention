@@ -29,11 +29,22 @@ const createExtensionApi = () => {
         console.log("Selected:", element);
     },
     onCopySuccess: (elements, content) => {
-        console.log("Copied to clipboard:", content);
+        console.log("Copied element:", elements);
+        console.log("Copied content:", content);
+
+        // Extract serializable information from DOM elements
+        // Ensure elements is an array (might be NodeList)
+        const serializableElements = Array.from(elements).map(element => ({
+            tagName: element.tagName,
+            id: element.id,
+            className: element.className,
+            outerHTML: element.outerHTML // Send essential HTML for reference
+        }));
+
         // Send copied elements to sidepanel with error handling
         browser.runtime.sendMessage({
             type: "REACT_GRAB_ELEMENTS_COPIED",
-            elements: elements,
+            elements: serializableElements,
             content: content
         }).catch(() => {
             // Ignore error when sidepanel is not open
