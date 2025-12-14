@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
+import { Tag } from '~/components/ui/tag';
 
 // Initialize WebSocket connection
 const socket = io('http://127.0.0.1:3000', {
@@ -185,12 +186,12 @@ function AppV2() {
               }
 
               return (
-                <div
+                <Tag
                   key={index}
-                  className="px-3 py-1 bg-primary text-primary-foreground text-xs rounded-full"
+                  variant="default"
                 >
                   {tagContent}
-                </div>
+                </Tag>
               );
             })}
           </div>
