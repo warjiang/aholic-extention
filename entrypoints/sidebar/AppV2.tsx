@@ -38,8 +38,12 @@ function AppV2() {
       console.log('receive content script', message)
       if (message.type === "REACT_GRAB_ELEMENTS_COPIED") {
         setCopiedContent(message.content);
-        // Append new elements to existing ones (instead of overwriting)
-        setCopiedElements(prev => [...prev, ...message.elements]);
+        // Append new elements to existing ones and deduplicate using outerHTML as unique identifier
+        setCopiedElements(prev => {
+          const combined = [...prev, ...message.elements];
+          // Use outerHTML as unique key to avoid duplicates
+          return [...new Map(combined.map(el => [el.outerHTML, el])).values()];
+        });
         // You can also send this to the WebSocket if needed
         /*
         socket.emit('query', {
@@ -143,7 +147,7 @@ function AppV2() {
     e.preventDefault();
     sendMessage(inputValue);
   };
-  console.log('copiedElements', copiedElements)
+  // console.log('copiedElements', copiedElements)
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
@@ -170,9 +174,9 @@ function AppV2() {
           </div>
           <div className="flex flex-wrap gap-2">
             {copiedElements.map((element, index) => {
-              console.log('element', element)
+              // console.log('element', element)
               // Use serializable element data directly
-              const tagName = element.tagName?.toUpperCase() || 'ELEMENT';
+              const tagName = (element.tagName || 'ELEMENT').toLowerCase();
               const id = element.id;
               const className = element.className?.toString().split(' ')[0] || '';
 
