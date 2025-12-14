@@ -19,10 +19,46 @@ const cwd = '/Users/dingwenjiang/workspace/codereview/warjiang/imagewave'
 const sessionId = 'cfa6de18-baa2-4381-8317-859cc00f2355'
 
 let cnt = 0;
+let cnt2 = 0
 function AppV2() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // State for copied elements from content script
+  const [copiedContent, setCopiedContent] = useState<string | null>(null);
+  const [copiedElements, setCopiedElements] = useState<any[]>([]);
+
+  // Listen for messages from content script
+  useEffect(() => {
+    if(cnt2 != 0) return
+    cnt2++;
+    const handleMessage = (message: any) => {
+      console.log('receive content script', message)
+      if (message.type === "REACT_GRAB_ELEMENTS_COPIED") {
+        setCopiedContent(message.content);
+        setCopiedElements(message.elements);
+        // You can also send this to the WebSocket if needed
+        /*
+        socket.emit('query', {
+          type: 'copied_elements',
+          content: message.content,
+          elements: message.elements,
+          cwd,
+          sessionId,
+        });
+        */
+      }
+    };
+
+    // Add message listener
+    browser.runtime.onMessage.addListener(handleMessage);
+
+    // Clean up listener on unmount
+    // return () => {
+    //   browser.runtime.onMessage.removeListener(handleMessage);
+    // };
+  }, []);
 
   // Scroll to bottom of messages
   const scrollToBottom = () => {
@@ -112,6 +148,30 @@ function AppV2() {
       <div className="p-4 bg-white border-b border-gray-200">
         <h1 className="text-lg font-semibold text-gray-800">Chat Interface</h1>
       </div>
+
+      {/* Copied Elements Display */}
+      {copiedContent && (
+        <div className="p-4 bg-blue-50 border-b border-gray-200">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-sm font-semibold text-gray-800">Selected Elements:</h2>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setCopiedContent(null);
+                setCopiedElements([]);
+              }}
+            >
+              Clear
+            </Button>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-3 overflow-hidden">
+            <pre className="text-xs text-gray-700 whitespace-pre-wrap max-h-32 overflow-y-auto">
+              {copiedContent}
+            </pre>
+          </div>
+        </div>
+      )}
 
       {/* Messages Container */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">

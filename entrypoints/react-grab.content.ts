@@ -30,6 +30,15 @@ const createExtensionApi = () => {
     },
     onCopySuccess: (elements, content) => {
         console.log("Copied to clipboard:", content);
+        // Send copied elements to sidepanel with error handling
+        browser.runtime.sendMessage({
+            type: "REACT_GRAB_ELEMENTS_COPIED",
+            elements: elements,
+            content: content
+        }).catch(() => {
+            // Ignore error when sidepanel is not open
+            console.log("Sidepanel not available for message delivery");
+        });
     },
   };
 
