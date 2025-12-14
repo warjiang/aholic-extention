@@ -11,6 +11,6 @@ export default defineConfig({
       default_path: 'sidebar.html',
       // default_width: 350,
     },
-    permissions: ['sidePanel'],
+    permissions: ['sidePanel']
   },
 });
