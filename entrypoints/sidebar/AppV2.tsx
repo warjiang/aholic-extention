@@ -4,6 +4,7 @@ import { io } from 'socket.io-client';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Tag } from '~/components/ui/tag';
+import { Project, Session } from './types';
 
 // Initialize WebSocket connection
 const socket = io('http://127.0.0.1:3000', {
@@ -29,6 +30,11 @@ function AppV2() {
   // State for copied elements from content script
   const [copiedContent, setCopiedContent] = useState<string | null>(null);
   const [copiedElements, setCopiedElements] = useState<any[]>([]);
+
+  // State for projects and sessions
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [sessions, setSessions] = useState<Session[]>([]);
 
   // Listen for messages from content script
   useEffect(() => {
@@ -66,6 +72,38 @@ function AppV2() {
     // };
   }, []);
 
+  // Fetch all projects
+  const fetchProjects = async () => {
+    try {
+      const response = await fetch('http://127.0.0.1:3000/api/projects');
+      if (response.ok) {
+        const data = await response.json();
+        setProjects(data);
+      } else {
+        console.error('Failed to fetch projects:', response.status);
+      }
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+    }
+  };
+
+  // Fetch sessions for a specific project
+  const fetchSessions = async (projectName: string) => {
+    try {
+      const p = projects.find(item => item.displayName === projectName);
+      const response = await fetch(`http://127.0.0.1:3000/api/sessions?projectName=${p?.name}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSessions(data.sessions);
+      } else {
+        console.error('Failed to fetch sessions:', response.status);
+      }
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+    }
+  };
+  console.log('sessions', sessions)
+
   // Scroll to bottom of messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -74,6 +112,20 @@ function AppV2() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Fetch projects on component mount
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  // Fetch sessions when selected project changes
+  useEffect(() => {
+    if (selectedProject) {
+      fetchSessions(selectedProject);
+    } else {
+      setSessions([]);
+    }
+  }, [selectedProject]);
 
   // Handle WebSocket connect
   useEffect(() => {
@@ -154,6 +206,39 @@ function AppV2() {
       {/* Chat Header */}
       <div className="p-4 bg-white border-b border-gray-200">
         <h1 className="text-lg font-semibold text-gray-800">Chat Interface</h1>
+      </div>
+
+      {/* Projects and Sessions Display */}
+      <div className="p-4 bg-white border-b border-gray-200">
+        <h2 className="text-sm font-semibold text-gray-800 mb-2">Projects</h2>
+        <div className="flex flex-wrap gap-2 mb-4">
+          {projects.map((project, index) => (
+            <Button
+              key={index}
+              variant={selectedProject === project.displayName ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setSelectedProject(project.displayName)}
+            >
+              {project.displayName}
+            </Button>
+          ))}
+        </div>
+
+        {selectedProject && sessions.length > 0 && (
+          <div>
+            <h3 className="text-xs font-semibold text-gray-800 mb-2">Sessions</h3>
+            <div className="flex flex-wrap gap-2">
+              {sessions.map((session, index) => (
+                <Tag
+                  key={index}
+                  variant="secondary"
+                >
+                  {session.id}
+                </Tag>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Copied Elements Display */}
